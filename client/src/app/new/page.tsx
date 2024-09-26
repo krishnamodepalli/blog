@@ -3,40 +3,45 @@
 import React, { useCallback, useRef } from "react";
 
 import { montserrat, raleway } from "../_fonts";
+import styles from "./styles.module.css";
 
 export default function Page({}: {}) {
   const titlePHRef = useRef<HTMLSpanElement | null>(null);
-  const paraRefs = useRef<[HTMLParagraphElement | null]>([null]);
+  const paraRefs = useRef<Array<HTMLParagraphElement>>([]);
 
   const contentContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleEnterKeyPress = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      insertNewPara();
-      return;
-    }
+  const handleEnterKeyPress = useCallback((ref: HTMLParagraphElement) => {
+    insertNewPara(ref);
+    return;
   }, []);
 
-  const insertNewPara = () => {
+  const insertNewPara = (ref?: HTMLParagraphElement) => {
+    console.log(paraRefs.current);
     const contentContainer = contentContainerRef.current;
     if (contentContainer) {
       const newPara = document.createElement("p");
-      newPara.className = `${raleway.className} text-ts outline-none mb-8 text-lg tracking-wider`;
-      newPara.addEventListener("keydown", handleEnterKeyPress);
-      newPara.contentEditable = "true";
-      const pararefs = paraRefs.current;
-      if (pararefs) {
-        pararefs.push(newPara);
+      newPara.addEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleEnterKeyPress(newPara);
+        }
+      });
+      const paras = paraRefs.current;
+      if (paras.length === 0) {
+        contentContainer.appendChild(newPara);
+        paras.push(newPara);
+      } else if (ref) {
+        contentContainer.insertBefore(newPara, ref.nextSibling);
+        paras.splice(paras.indexOf(ref), 0, newPara);
       }
-      contentContainer.appendChild(newPara);
       newPara.focus();
     }
   };
 
   return (
     <div className="ml-16 mt-20">
-      <div className="relative">
+      <div className={`relative ${styles.blog}`}>
         <div id="title" className="mb-8">
           <div className="relative border-l-2 border-ts p-2 pl-4 text-6xl font-bold">
             <span
@@ -66,7 +71,10 @@ export default function Page({}: {}) {
             ></p>
           </div>
         </div>
-        <div ref={contentContainerRef} className="text-ts"></div>
+        <div
+          ref={contentContainerRef}
+          className={`text-ts ${styles.content} ${raleway.className} md:text-lg lg:text-2xl`}
+        ></div>
       </div>
     </div>
   );
